@@ -14,6 +14,7 @@ RET = 0b00010001
 NOP = 0b00000000
 HTL = 0b00000001 # halt, exit emulator
 LDI = 0b10000010 # load "immediate", store a value, set a register to a value
+
 class CPU:
     """Main CPU class."""
 
@@ -21,16 +22,20 @@ class CPU:
         """Construct a new CPU."""
         self.ram = [0] * 256
         self.reg = [0] * 8
-        self.pc = 0
-        self.sp = 0
-        self.mar = None
-        self.mdr = None
+        self.pc = 0 #program counter
+        self.sp = 0 #stack pointer
+        self.mar = None # memory access register
+        self.mdr = None # memory register
 
-    def ram_write(self):
-        pass
+    def ram_write(self, mdr, mar):
+        self.reg[mar] = mdr
 
-    def ram_read(self):
-        pass
+    def ram_read(self, mar):
+        try:
+            return self.reg[mar]
+        except KeyError:
+            print("Invalid Register")
+            return None
 
     def load(self):
         """Load a program into memory."""
@@ -85,4 +90,13 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
-        pass
+        running = True
+        while running:
+            ir = ram_read(self.pc)
+            operand_a = ram_read(self.pc + 1)
+            operand_b = ram_read(self.pc + 2)
+
+            if ir == HLT:
+                sys.exit()
+
+            elif ir == PRN:
