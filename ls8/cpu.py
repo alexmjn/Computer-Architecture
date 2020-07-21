@@ -2,11 +2,34 @@
 
 import sys
 
+ADD = 0b10100000
+SUB = 0b10100001
+MUL = 0b10100010
+DIV = 0b10100011
+PRN = 0b01000111
+
+CALL = 0b01010000
+RET = 0b00010001
+
+NOP = 0b00000000
+HTL = 0b00000001 # halt, exit emulator
+LDI = 0b10000010 # load "immediate", store a value, set a register to a value
 class CPU:
     """Main CPU class."""
 
     def __init__(self):
         """Construct a new CPU."""
+        self.ram = [0] * 256
+        self.reg = [0] * 8
+        self.pc = 0
+        self.sp = 0
+        self.mar = None
+        self.mdr = None
+
+    def ram_write(self):
+        pass
+
+    def ram_read(self):
         pass
 
     def load(self):
