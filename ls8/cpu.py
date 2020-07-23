@@ -55,13 +55,19 @@ class CPU:
     def prn(self, op_a):
         print(self.reg[op_a])
 
-    def pop(self, reg_num):
-        self.reg[reg_num] = self.ram_read(self.reg[7])
-        self.reg[7] += 1
-
     def push(self, reg_num):
         self.reg[7] -= 1
-        self.ram_write(self.reg[reg_num], self.reg[7])
+        reg = self.ram[self.pc+1]
+        value = self.reg[reg]
+        sp = self.reg[7]
+        self.ram[sp] = value
+
+    def pop(self, reg_num):
+        sp = self.reg[7]
+        reg = self.ram[self.pc+1]
+        value = self.ram[sp]
+        self.reg[reg] = value
+        self.reg[7] -= 1
 
     def add(self, op_a, op_b):
         self.reg[op_a] += self.reg[op_b]
