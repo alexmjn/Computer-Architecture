@@ -6,7 +6,10 @@ ADD = 0b10100000
 SUB = 0b10100001
 MUL = 0b10100010
 DIV = 0b10100011
-PRN = 0b01000111
+MOD = 0b10100100
+
+INC = 0b01100101
+DEC = 0b01100110
 
 CALL = 0b01010000
 RET = 0b00010001
@@ -14,6 +17,10 @@ RET = 0b00010001
 NOP = 0b00000000
 HLT = 0b00000001 # halt, exit emulator
 LDI = 0b10000010 # load "immediate", store a value, set a register to a value
+
+PRN = 0b01000111
+PUSH = 0b01000101
+POP = 0b01000110
 
 class CPU:
     """Main CPU class."""
@@ -27,6 +34,35 @@ class CPU:
         self.sp = self.reg[7]
         self.mar = None # memory access register
         self.mdr = None # memory register
+        self.branch_table = {
+            HLT: self.hlt,
+            LDI: self.ldi,
+            PRN: self.prn,
+            POP: self.pop,
+            PUSH: self.push,
+            ADD: self.alu,
+            SUB: self.alu,
+            MUL: self.alu,
+            DIV: self.alu,
+            MOD: self.alu,
+        }
+
+    def hlt(self, op_a, op_b):
+        sys.exit()
+
+    def ldi(self, op_a, op_b):
+        self.reg[op_a] = op_b
+
+    def prn(self, op_a, op_b):
+        print(self.reg[op_a])
+
+    def pop(self, reg_num):
+        self.reg[reg_num] = self.ram_read(self.reg[7])
+        self.reg[7] +=7
+
+    def push(self, reg_num):
+        self.reg[7] -= 1
+        self.ram_write(self.reg[reg_num], self.reg[7])
 
     def ram_write(self, address, value):
         self.ram[address] = value
@@ -65,9 +101,17 @@ class CPU:
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
 
+        elif op == "SUB":
+            self.reg[reg_a] -= self.reg[reg_b]
+
         elif op == "MUL":
             self.reg[reg_a] = self.reg[reg_a] * self.reg[reg_b]
 
+        elif op == "DIV":
+            self.reg[reg_a] = self.reg[reg_a] / self.reg[reg_b]
+
+        elif op == "MOD":
+            self.reg[reg_a] = self.reg[reg_a] % self.reg[reg_b]
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -101,19 +145,22 @@ class CPU:
         operand_b = self.ram_read(self.pc + 2)
 
         while self.IR != HLT:
-            if self.IR == LDI:
-                self.reg[operand_a] = operand_b
+            num_arguments = ((self.IR & 0b11000000) >> 6)
 
-            elif self.IR == MUL:
-                self.alu("MUL", operand_a, operand_b)
+            try:
+                if num_arguments == 0:
+                    self.branch[self.IR]
 
-            elif self.IR == PRN:
-                print(self.reg[operand_a])
+                elif num_args == 1:
+                    self.branch[self.IR](operand_a)
 
-            else:
+                else:
+                    self.branch[self.IR](operand_a, operand_b)
+
+            except:
                 raise Exception('Unsupported operation')
 
-            self.pc += ((self.IR & 0b11000000) >> 6) + 1
+            self.pc += (num_arguments + 1)
             self.IR = self.ram_read(self.pc)
             operand_a = self.ram_read(self.pc + 1)
             operand_b = self.ram_read(self.pc + 2)
