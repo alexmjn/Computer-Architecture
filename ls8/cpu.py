@@ -29,7 +29,7 @@ class CPU:
         """Construct a new CPU."""
         self.ram = [0] * 256
         self.reg = [0] * 8
-        self.reg[7] = int("F4", 16)
+        self.reg[7] = 0xF4
         self.pc = 0 #program counter
         self.sp = self.reg[7]
         self.mar = None # memory access register
@@ -40,29 +40,41 @@ class CPU:
             PRN: self.prn,
             POP: self.pop,
             PUSH: self.push,
-            ADD: self.alu,
-            SUB: self.alu,
-            MUL: self.alu,
-            DIV: self.alu,
-            MOD: self.alu,
+            ADD: self.add,
+            SUB: self.sub,
+            MUL: self.mul,
+            DIV: self.div,
         }
 
-    def hlt(self, op_a, op_b):
+    def hlt(self):
         sys.exit()
 
     def ldi(self, op_a, op_b):
         self.reg[op_a] = op_b
 
-    def prn(self, op_a, op_b):
+    def prn(self, op_a):
         print(self.reg[op_a])
 
     def pop(self, reg_num):
         self.reg[reg_num] = self.ram_read(self.reg[7])
-        self.reg[7] +=7
+        self.reg[7] += 1
 
     def push(self, reg_num):
         self.reg[7] -= 1
         self.ram_write(self.reg[reg_num], self.reg[7])
+
+    def add(self, op_a, op_b):
+        self.reg[op_a] += self.reg[op_b]
+
+    def sub(self, op_a, op_b):
+        self.reg[op_a] -= self.reg[op_b]
+
+    def mul(self, op_a, op_b):
+        self.reg[op_a] *= self.reg[op_b]
+
+    def div(self, op_a, op_b):
+        self.reg[op_a] /= self.reg[op_b]
+
 
     def ram_write(self, address, value):
         self.ram[address] = value
@@ -74,7 +86,7 @@ class CPU:
             print("Invalid Register")
             return None
 
-    def load(self):
+    def load(self, filename):
         """Load a program into memory."""
         basePath = './examples/'
         file = 'print8.ls8'
@@ -95,25 +107,6 @@ class CPU:
                 address += 1
 
 
-    def alu(self, op, reg_a, reg_b):
-        """ALU operations."""
-
-        if op == "ADD":
-            self.reg[reg_a] += self.reg[reg_b]
-
-        elif op == "SUB":
-            self.reg[reg_a] -= self.reg[reg_b]
-
-        elif op == "MUL":
-            self.reg[reg_a] = self.reg[reg_a] * self.reg[reg_b]
-
-        elif op == "DIV":
-            self.reg[reg_a] = self.reg[reg_a] / self.reg[reg_b]
-
-        elif op == "MOD":
-            self.reg[reg_a] = self.reg[reg_a] % self.reg[reg_b]
-        else:
-            raise Exception("Unsupported ALU operation")
 
 
     def trace(self):
@@ -147,18 +140,16 @@ class CPU:
         while self.IR != HLT:
             num_arguments = ((self.IR & 0b11000000) >> 6)
 
-            try:
-                if num_arguments == 0:
-                    self.branch[self.IR]
 
-                elif num_args == 1:
-                    self.branch[self.IR](operand_a)
+            if num_arguments == 0:
+                self.branch_table[self.IR]
 
-                else:
-                    self.branch[self.IR](operand_a, operand_b)
+            elif num_arguments == 1:
+                self.branch_table[self.IR](operand_a)
 
-            except:
-                raise Exception('Unsupported operation')
+            else:
+                self.branch_table[self.IR](operand_a, operand_b)
+
 
             self.pc += (num_arguments + 1)
             self.IR = self.ram_read(self.pc)
