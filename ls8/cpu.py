@@ -57,17 +57,15 @@ class CPU:
 
     def push(self, reg_num):
         self.reg[7] -= 1
-        reg = self.ram[self.pc+1]
-        value = self.reg[reg]
+        value = self.reg[reg_num]
         sp = self.reg[7]
         self.ram[sp] = value
 
     def pop(self, reg_num):
         sp = self.reg[7]
-        reg = self.ram[self.pc+1]
         value = self.ram[sp]
-        self.reg[reg] = value
-        self.reg[7] -= 1
+        self.reg[reg_num] = value
+        self.reg[7] += 1
 
     def add(self, op_a, op_b):
         self.reg[op_a] += self.reg[op_b]
